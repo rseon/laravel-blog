@@ -15,16 +15,16 @@ class PostTest extends TestCase
 
     public function testIndex()
     {
-        $anakin = factory(User::class)->states('anakin')->create();
+        $anakin = User::factory()->anakin()->create();
 
-        $post = factory(Post::class)->create(['author_id' => $anakin->id]);
-        factory(Post::class, 2)->create();
-        factory(Comment::class, 3)->create(['post_id' => $post->id]);
+        $post = Post::factory()->create(['author_id' => $anakin->id]);
+        Post::factory()->count(2)->create();
+        Comment::factory()->count(3)->create(['post_id' => $post->id]);
 
         $this->get('/')
             ->assertOk()
             ->assertSee('Latest posts')
-            ->assertSee(e($post->title))
+            ->assertSee($post->title)
             ->assertSee(humanize_date($post->posted_at))
             ->assertSee('3')
             ->assertSee('Anakin');
@@ -32,27 +32,27 @@ class PostTest extends TestCase
 
     public function testSearch()
     {
-        factory(Post::class, 3)->create();
-        $post = factory(Post::class)->create(['title' => 'Hello Obiwan']);
+        Post::factory()->count(3)->create();
+        $post = Post::factory()->create(['title' => 'Hello Obiwan']);
 
         $this->get('/?q=Hello')
             ->assertOk()
             ->assertSee('1 post found')
-            ->assertSee(e($post->title))
+            ->assertSee($post->title)
             ->assertSee(humanize_date($post->posted_at));
     }
 
     public function testShow()
     {
-        $post = factory(Post::class)->create();
-        factory(Comment::class, 2)->create(['post_id' => $post->id]);
-        factory(Comment::class)->create(['post_id' => $post->id]);
+        $post = Post::factory()->create();
+        Comment::factory()->count(2)->create(['post_id' => $post->id]);
+        Comment::factory()->create(['post_id' => $post->id]);
 
         $this->actingAsUser()
             ->get("/posts/{$post->slug}")
             ->assertOk()
-            ->assertSee(e($post->content))
-            ->assertSee(e($post->title))
+            ->assertSee($post->content)
+            ->assertSee($post->title)
             ->assertSee(humanize_date($post->posted_at))
             ->assertSee('3 comments')
             ->assertSee('Comment');
@@ -60,7 +60,7 @@ class PostTest extends TestCase
 
     public function testShowUnauthenticated()
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
 
         $this->get("/posts/{$post->slug}")
             ->assertOk()

@@ -16,8 +16,8 @@ class CommentTest extends TestCase
 
     public function testIndex()
     {
-        $anakin = factory(User::class)->states('anakin')->create();
-        $comment = factory(Comment::class)->create(['author_id' => $anakin->id]);
+        $anakin = User::factory()->anakin()->create();
+        $comment = Comment::factory()->create(['author_id' => $anakin->id]);
 
         $this->actingAsAdmin()
             ->get('/admin/comments')
@@ -27,13 +27,13 @@ class CommentTest extends TestCase
             ->assertSee('Content')
             ->assertSee('Author')
             ->assertSee('Posted at')
-            ->assertSee(e(Str::limit($comment->content, 50)));
+            ->assertSee(Str::limit($comment->content, 50));
     }
 
     public function testEdit()
     {
-        $anakin = factory(User::class)->states('anakin')->create();
-        $comment = factory(Comment::class)->create(['author_id' => $anakin->id]);
+        $anakin = User::factory()->anakin()->create();
+        $comment = Comment::factory()->create(['author_id' => $anakin->id]);
 
         $this->actingAsAdmin()
             ->get("/admin/comments/{$comment->id}/edit")
@@ -42,7 +42,7 @@ class CommentTest extends TestCase
             ->assertSee('Show post :')
             ->assertSee(route('posts.show', $comment->post))
             ->assertSee('Content')
-            ->assertSee(e($comment->content))
+            ->assertSee($comment->content)
             ->assertSee('Posted at')
             ->assertSee(humanize_date($comment->posted_at, 'Y-m-d\TH:i'))
             ->assertSee('Update')
@@ -51,8 +51,8 @@ class CommentTest extends TestCase
 
     public function testUpdate()
     {
-        $post = factory(Post::class)->create();
-        $comment = factory(Comment::class)->create(['post_id' => $post->id]);
+        $post = Post::factory()->create();
+        $comment = Comment::factory()->create(['post_id' => $post->id]);
         $params = $this->validParams([
             'post_id' => $post->id,
             'posted_at' => $post->posted_at->addDay()->format('Y-m-d\TH:i')
@@ -68,8 +68,8 @@ class CommentTest extends TestCase
 
     public function testUpdateFail()
     {
-        $post = factory(Post::class)->create();
-        $comment = factory(Comment::class)->create(['post_id' => $post->id]);
+        $post = Post::factory()->create();
+        $comment = Comment::factory()->create(['post_id' => $post->id]);
         $params = $this->validParams([
             'post_id' => $post->id,
             'posted_at' => $post->posted_at->subDay()->format('Y-m-d\TH:i')
@@ -85,7 +85,7 @@ class CommentTest extends TestCase
 
     public function testDelete()
     {
-        $comment = factory(Comment::class)->create();
+        $comment = Comment::factory()->create();
 
         $this->actingAsAdmin()
             ->delete("/admin/comments/{$comment->id}")
@@ -103,13 +103,13 @@ class CommentTest extends TestCase
      */
     private function validParams($overrides = [])
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
 
         return array_merge([
             'content' => "Great article ! Thanks for sharing it with us.",
             'posted_at' => $post->posted_at->addDay()->format('Y-m-d\TH:i'),
             'post_id' => $post->id,
-            'author_id' => factory(User::class)->create()->id,
+            'author_id' => User::factory()->create()->id,
         ], $overrides);
     }
 }

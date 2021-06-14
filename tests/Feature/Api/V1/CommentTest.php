@@ -14,7 +14,7 @@ class CommentTest extends TestCase
 
     public function testCommentIndex()
     {
-        factory(Comment::class, 2)->create();
+        Comment::factory()->count(2)->create();
 
         $this->json('GET', '/api/v1/comments')
             ->assertOk()
@@ -46,9 +46,9 @@ class CommentTest extends TestCase
 
     public function testUsersComments()
     {
-        $user = factory(User::class)->create();
-        factory(Comment::class, 10)->create(['author_id' => $user->id]);
-        factory(Comment::class, 10)->create();
+        $user = User::factory()->create();
+        Comment::factory()->count(10)->create(['author_id' => $user->id]);
+        Comment::factory()->count(10)->create();
 
         $this->json('GET', "/api/v1/users/{$user->id}/comments")
             ->assertOk()
@@ -88,9 +88,9 @@ class CommentTest extends TestCase
 
     public function testPostsComments()
     {
-        $post = factory(Post::class)->create();
-        factory(Comment::class, 10)->create(['post_id' => $post->id]);
-        factory(Comment::class, 10)->create();
+        $post = Post::factory()->create();
+        Comment::factory()->count(10)->create(['post_id' => $post->id]);
+        Comment::factory()->count(10)->create();
 
         $this->json('GET', "/api/v1/posts/{$post->id}/comments")
             ->assertOk()
@@ -130,11 +130,11 @@ class CommentTest extends TestCase
 
     public function testStore()
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
 
         $this->actingAsUser('api')
             ->json('POST', "/api/v1/posts/{$post->id}/comments", $this->validParams())
-            ->assertStatus(201);
+            ->assertCreated();
     }
 
     public function testStoreFail()
@@ -143,13 +143,13 @@ class CommentTest extends TestCase
             ->json('POST', "/api/v1/posts/31415/comments", $this->validParams())
             ->assertNotFound()
             ->assertJson([
-                'message' => 'No query results for model [App\\Models\\Post] 31415'
+                'message' => sprintf('No query results for model [%s] 31415', Post::class)
             ]);
     }
 
     public function testCommentShow()
     {
-        $comment = factory(Comment::class)->create([
+        $comment = Comment::factory()->create([
             'content' => 'The Empire Strikes Back'
         ]);
 
@@ -186,17 +186,17 @@ class CommentTest extends TestCase
         $this->json('GET', '/api/v1/comments/31415')
             ->assertNotFound()
             ->assertJson([
-                'message' => 'No query results for model [App\\Models\\Comment] 31415'
+                'message' => sprintf('No query results for model [%s] 31415', Comment::class)
             ]);
     }
 
     public function testCommentDelete()
     {
-        $comment = factory(Comment::class)->create();
+        $comment = Comment::factory()->create();
 
         $this->actingAs($comment->author, 'api')
             ->json('DELETE', "/api/v1/comments/{$comment->id}")
-            ->assertStatus(204);
+            ->assertNoContent();
     }
 
     public function testCommentDeleteNotFound()
@@ -205,13 +205,13 @@ class CommentTest extends TestCase
             ->json('DELETE', '/api/v1/comments/31415')
             ->assertNotFound()
             ->assertJson([
-                'message' => 'No query results for model [App\\Models\\Comment] 31415'
+                'message' => sprintf('No query results for model [%s] 31415', Comment::class)
             ]);
     }
 
     public function testCommentDeleteUnauthorized()
     {
-        $comment = factory(Comment::class)->create();
+        $comment = Comment::factory()->create();
 
         $this->actingAsUser('api')
             ->json('DELETE', "/api/v1/comments/{$comment->id}")
@@ -223,7 +223,7 @@ class CommentTest extends TestCase
 
     public function testCommentsDeleteUnauthenticated()
     {
-        $comment = factory(Comment::class)->create();
+        $comment = Comment::factory()->create();
         $this->json('DELETE', "/api/v1/comments/{$comment->id}")
             ->assertUnauthorized()
             ->assertJson([

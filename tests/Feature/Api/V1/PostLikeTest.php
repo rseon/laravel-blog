@@ -12,11 +12,11 @@ class PostLikeTest extends TestCase
 
     public function testPostLike()
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
 
         $this->actingAsUser('api')
             ->json('POST', "/api/v1/posts/{$post->id}/likes")
-            ->assertStatus(201);
+            ->assertCreated();
 
         $this->assertCount(1, $post->likes);
     }
@@ -24,7 +24,7 @@ class PostLikeTest extends TestCase
     public function testPostDislike()
     {
         $user = $this->user();
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
         $post->likes()->create(['author_id' => $user->id]);
 
         $this->actingAs($user, 'api')

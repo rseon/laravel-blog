@@ -16,14 +16,14 @@ class UserTest extends TestCase
     public function testProfil()
     {
         $user = $this->user();
-        $comment = factory(Comment::class)->create(['author_id' => $user->id]);
-        $posts = factory(Post::class, 3)->create(['author_id' => $user->id]);
+        $comment = Comment::factory()->create(['author_id' => $user->id]);
+        $posts = Post::factory()->count(3)->create(['author_id' => $user->id]);
 
         $this->actingAs($user)
             ->get("/users/{$user->id}")
             ->assertOk()
-            ->assertSee(e($user->name))
-            ->assertSee(e($user->email))
+            ->assertSee($user->name)
+            ->assertSee($user->email)
             ->assertSee('Comments')
             ->assertSee('Posts')
             ->assertSee('3')

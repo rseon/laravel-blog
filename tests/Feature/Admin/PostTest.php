@@ -15,9 +15,9 @@ class PostTest extends TestCase
 
     public function testIndex()
     {
-        $anakin = factory(User::class)->states('anakin')->create();
-        factory(Post::class)->create(['author_id' => $anakin->id]);
-        factory(Post::class, 3)->create();
+        $anakin = User::factory()->anakin()->create();
+        Post::factory()->create(['author_id' => $anakin->id]);
+        Post::factory()->count(3)->create();
 
         $this->actingAsAdmin()
             ->get("/admin/posts")
@@ -70,15 +70,15 @@ class PostTest extends TestCase
     public function testEdit()
     {
         $anakin = $this->admin(['name' => 'Anakin', 'email' => 'anakin@skywalker.st']);
-        $post = factory(Post::class)->create(['author_id' => $anakin->id]);
+        $post = Post::factory()->create(['author_id' => $anakin->id]);
 
         $this->actingAs($anakin)
             ->get("/admin/posts/{$post->slug}/edit")
             ->assertOk()
             ->assertSee('Anakin')
             ->assertSee('Show post')
-            ->assertSee(e($post->title))
-            ->assertSee(e($post->content))
+            ->assertSee($post->title)
+            ->assertSee($post->content)
             ->assertSee(humanize_date($post->posted_at, 'Y-m-d\TH:i'))
             ->assertSee('Update')
             ->assertSee('Posted at');
@@ -86,7 +86,7 @@ class PostTest extends TestCase
 
     public function testUpdate()
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
         $params = $this->validParams();
 
         $response = $this->actingAsAdmin()->patch("/admin/posts/{$post->slug}", $params);
@@ -101,8 +101,9 @@ class PostTest extends TestCase
 
     public function testDelete()
     {
-        $post = factory(Post::class)->create();
-        factory(Comment::class, 2)
+        $post = Post::factory()->create();
+        Comment::factory()
+            ->count(2)
             ->create()
             ->each(function ($comment) use ($post) {
                 $comment->post_id = $post->id;

@@ -15,7 +15,7 @@ class PostTest extends TestCase
 
     public function testPostIndex()
     {
-        factory(Post::class, 2)->create();
+        Post::factory()->count(2)->create();
 
         $this->json('GET', '/api/v1/posts')
             ->assertOk()
@@ -49,8 +49,8 @@ class PostTest extends TestCase
 
     public function testUsersPosts()
     {
-        $user = factory(User::class)->create();
-        factory(Post::class)->create(['author_id' => $user->id]);
+        $user = User::factory()->create();
+        Post::factory()->create(['author_id' => $user->id]);
 
         $this->json('GET', "/api/v1/users/{$user->id}/posts")
             ->assertOk()
@@ -84,23 +84,23 @@ class PostTest extends TestCase
 
     public function testUsersPostsFail()
     {
-        $user = factory(User::class)->create();
-        factory(Post::class)->create(['author_id' => $user->id]);
+        $user = User::factory()->create();
+        Post::factory()->create(['author_id' => $user->id]);
 
         $this->json('GET', '/api/v1/users/314/posts')
             ->assertNotFound()
             ->assertJson([
-                'message' => 'No query results for model [App\\Models\\User] 314'
+                'message' => sprintf('No query results for model [%s] 314', User::class)
             ]);
     }
 
     public function testPostShow()
     {
-        $post = factory(Post::class)->create([
+        $post = Post::factory()->create([
             'title' => 'The Empire Strikes Back',
             'content' => 'A Star Wars Story'
         ]);
-        factory(Comment::class, 2)->create(['post_id' => $post->id]);
+        Comment::factory()->count(2)->create(['post_id' => $post->id]);
 
         $this->json('GET', "/api/v1/posts/{$post->id}")
             ->assertOk()
@@ -133,13 +133,13 @@ class PostTest extends TestCase
         $this->json('GET', '/api/v1/posts/31415')
             ->assertNotFound()
             ->assertJson([
-                'message' => 'No query results for model [App\\Models\\Post] 31415'
+                'message' => sprintf('No query results for model [%s] 31415', Post::class)
             ]);
     }
 
     public function testUpdate()
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
         $params = $this->validParams();
 
         $this->actingAsAdmin('api')
@@ -155,7 +155,7 @@ class PostTest extends TestCase
 
     public function testUpdateFail()
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
 
         $this->actingAsUser('api')
             ->json('PATCH', "/api/v1/posts/{$post->id}", $this->validParams())
@@ -171,7 +171,7 @@ class PostTest extends TestCase
 
         $this->actingAsAdmin('api')
             ->json('POST', '/api/v1/posts/', $params)
-            ->assertStatus(201);
+            ->assertCreated();
 
         $params['posted_at'] = Carbon::yesterday()->second(0)->toDateTimeString();
         $this->assertDatabaseHas('posts', $params);
@@ -189,18 +189,18 @@ class PostTest extends TestCase
 
     public function testPostDelete()
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
 
         $this->actingAsAdmin('api')
             ->json('DELETE', "/api/v1/posts/{$post->id}")
-            ->assertStatus(204);
+            ->assertNoContent();
 
         $this->assertDatabaseMissing('posts', $post->toArray());
     }
 
     public function testPostDeleteUnauthorized()
     {
-        $post = factory(Post::class)->create();
+        $post = Post::factory()->create();
 
         $this->actingAsUser('api')
             ->json('DELETE', "/api/v1/posts/{$post->id}")
